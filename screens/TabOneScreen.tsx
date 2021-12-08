@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, ScrollView, Picker, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  ScrollView,
+  Picker,
+  TouchableOpacity,
+  Modal,
+  Alert,
+  Pressable,
+  Image,
+} from "react-native";
 
 import EditScreenInfo from "../components/EditScreenInfo";
 import { Text, View } from "../components/Themed";
@@ -10,17 +19,27 @@ import axios from "axios";
 export default function TabOneScreen({
   navigation,
 }: RootTabScreenProps<"TabOne">) {
-  const [clubs, setClubs] = useState<{}>({});
+  const [clubs, setClubs] = useState<any>();
   const [players, setPlayers] = useState<string[]>([]);
   const [list, setList] = useState<string[]>([]);
-  const [lastName, setLastName] = useState<string>("");
-  const [ultraPosition, setUltraPosition] = useState<number>(0);
   const [uniqPlayers, setUniqPlayers] = useState<any[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState("0");
-  const [selectedPosition, setSelectedPosition] = useState("0");
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<string>("0");
+  const [selectedPosition, setSelectedPosition] = useState<string>("0");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [modalBody, setModalBody] = useState<any>({
+    clubId: "",
+    stats: {
+      averageRating: 0,
+      totalGoals: 0,
+      totalMatches: 0,
+      totalStartedMatches: 0,
+      totalPlayedMatches: 0,
+    },
+  });
 
   useEffect(() => {
+    getAllClubs();
     getAllPlayers();
   }, []);
 
@@ -30,10 +49,6 @@ export default function TabOneScreen({
       "https://api.mpg.football/api/data/championship-clubs"
     );
     setClubs(response.data.championshipClubs);
-    // const filtered = Object.keys(response.data.championshipClubs)
-    //   .filter((key) => key)
-    //   .map((e) => response.data.championshipClubs[e].name["fr-FR"]);
-    // setClubs(filtered);
   };
 
   // Add all players
@@ -61,7 +76,7 @@ export default function TabOneScreen({
 
   // Filter
   const filter = (name: string, position: string): void => {
-    setIsLoading(true)
+    setIsLoading(true);
     let filteredPlayers: React.SetStateAction<string[]>;
     if (name !== "0") {
       if (position !== "0") {
@@ -84,11 +99,72 @@ export default function TabOneScreen({
       }
     }
     setList(filteredPlayers);
-    setIsLoading(false)
+    setIsLoading(false);
+  };
+
+  const displayStats = (player: {
+    clubId: string;
+    stats: {
+      averageRating: number;
+      totalGoals: number;
+      totalMatches: number;
+      totalStartedMatches: number;
+      totalPlayedMatches: number;
+    };
+  }) => {
+    setModalVisible(true);
+    setModalBody({
+      stats: player.stats,
+      url: clubs ? clubs[player.clubId].defaultJerseyUrl : null,
+      clubName: clubs ? clubs[player.clubId].name["fr-FR"] : null,
+    });
   };
 
   return (
     <View style={styles.container}>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Image
+              style={{ width: 100, height: 100 }}
+              source={{ uri: modalBody.url }}
+            />
+            <Text style={styles.modalText}>
+              Club name : {modalBody.clubName}
+            </Text>
+            <Text style={styles.modalText}>
+              Average rating :{" "}
+              {Math.round(modalBody.stats.averageRating * 100) / 100}
+            </Text>
+            <Text style={styles.modalText}>
+              Total goals : {modalBody.stats.totalGoals}
+            </Text>
+            <Text style={styles.modalText}>
+              Total matches : {modalBody.stats.totalMatches}
+            </Text>
+            <Text style={styles.modalText}>
+              Total started matches : {modalBody.stats.totalStartedMatches}
+            </Text>
+            <Text style={styles.modalText}>
+              Total played matches : {modalBody.stats.totalPlayedMatches}
+            </Text>
+            <Pressable
+              style={[styles.modalButton, styles.buttonClose]}
+              onPress={() => setModalVisible(!modalVisible)}
+            >
+              <Text style={styles.textStyle}>Hide Modal</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView>
         <View style={styles.filtersWrapper}>
           <Text style={styles.title}>Choisir un nom et/ou une position</Text>
@@ -150,7 +226,7 @@ export default function TabOneScreen({
                   <TouchableOpacity
                     key={id}
                     style={styles.player}
-                    onPress={() => console.log("Player : ", player.lastName)}
+                    onPress={() => displayStats(player)}
                   >
                     <Text>{player.firstName}</Text>
                     <Text>{player.lastName}</Text>
@@ -211,5 +287,47 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     marginBottom: 20,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    backgroundColor: "rgba(0,0,0,0.2)"
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalButton: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonOpen: {
+    backgroundColor: "#F194FF",
+  },
+  buttonClose: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
   },
 });
