@@ -45,10 +45,16 @@ export default function TabOneScreen({
 
   // Add all clubs
   const getAllClubs = async (): Promise<any> => {
-    let response = await axios.get(
-      "https://api.mpg.football/api/data/championship-clubs"
-    );
-    setClubs(response.data.championshipClubs);
+    try {
+      let response = await axios.get(
+        "https://api.mpg.football/api/data/championship-clubs"
+      );
+      if (response) {
+        setClubs(response.data.championshipClubs);
+      }
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   // Add all players
@@ -58,9 +64,12 @@ export default function TabOneScreen({
       let response = await axios.get(
         "https://api.mpg.football/api/data/championship-players-pool/1"
       );
-
       if (response) {
-        setPlayers(response.data.poolPlayers);
+        setPlayers(response.data.poolPlayers.sort((a: any,b: any) => {
+          const lastNameA = a.lastName.split(' ').slice(-1);
+          const lastNameB = b.lastName.split(' ').slice(-1);
+          return (lastNameA > lastNameB) ? 1 : ((lastNameB > lastNameA) ? -1 : 0)
+        }));
         setList(response.data.poolPlayers);
 
         const filtered = response.data.poolPlayers.map(
@@ -123,6 +132,7 @@ export default function TabOneScreen({
   return (
     <View style={styles.container}>
       <Modal
+        statusBarTranslucent={true}
         animationType="fade"
         transparent={true}
         visible={modalVisible}
@@ -141,25 +151,25 @@ export default function TabOneScreen({
             </Text>
             <Text style={styles.modalText}>
               Average rating :{" "}
-              {Math.round(modalBody.stats.averageRating * 100) / 100}
+              {modalBody.stats.averageRating ? Math.round(modalBody.stats.averageRating * 100) / 100 : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total goals : {modalBody.stats.totalGoals}
+              Total goals : {modalBody.stats.totalGoals ? modalBody.stats.totalGoals : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total matches : {modalBody.stats.totalMatches}
+              Total matches : {modalBody.stats.totalMatches ? modalBody.stats.totalMatches : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total started matches : {modalBody.stats.totalStartedMatches}
+              Total started matches : {modalBody.stats.totalStartedMatches ? modalBody.stats.totalStartedMatches : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total played matches : {modalBody.stats.totalPlayedMatches}
+              Total played matches : {modalBody.stats.totalPlayedMatches ? modalBody.stats.totalPlayedMatches : 0}
             </Text>
             <Pressable
               style={[styles.modalButton, styles.buttonClose]}
               onPress={() => setModalVisible(!modalVisible)}
             >
-              <Text style={styles.textStyle}>Hide Modal</Text>
+              <Text style={styles.textStyle}>Fermer</Text>
             </Pressable>
           </View>
         </View>
@@ -212,7 +222,7 @@ export default function TabOneScreen({
             style={styles.button}
             onPress={() => filter(selectedPlayer, selectedPosition)}
           >
-            <Text>Filtrer</Text>
+            <Text style={styles.buttonText}>Filtrer</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.playersWrapper}>
@@ -228,8 +238,12 @@ export default function TabOneScreen({
                     style={styles.player}
                     onPress={() => displayStats(player)}
                   >
-                    <Text>{player.firstName}</Text>
-                    <Text>{player.lastName}</Text>
+                    {player.firstName && (
+                      <Text>{player.firstName}{" "}</Text>
+                    )}
+                    {player.lastName && (
+                      <Text>{player.lastName}</Text>
+                    )}
                   </TouchableOpacity>
                 ))}
             </>
@@ -265,11 +279,12 @@ const styles = StyleSheet.create({
   },
   player: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     borderWidth: 1,
     borderRadius: 10,
     padding: 5,
     marginBottom: 5,
+    backgroundColor: 'orange'
   },
   button: {
     alignItems: "center",
@@ -277,6 +292,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     backgroundColor: "orange",
+  },
+  buttonText: {
+    fontWeight: "bold",
   },
   picker: {
     height: 50,
@@ -292,8 +310,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22,
-    backgroundColor: "rgba(0,0,0,0.2)"
+    paddingTop: 22,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalView: {
     margin: 20,
@@ -311,18 +329,18 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalButton: {
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 10,
     elevation: 2,
+    borderWidth: 1,
   },
   buttonOpen: {
     backgroundColor: "#F194FF",
   },
   buttonClose: {
-    backgroundColor: "#2196F3",
+    backgroundColor: "orange",
   },
   textStyle: {
-    color: "white",
     fontWeight: "bold",
     textAlign: "center",
   },
