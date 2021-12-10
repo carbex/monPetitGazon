@@ -3,13 +3,15 @@ import { StyleSheet } from 'react-native';
 
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
-
 import { RootTabScreenProps } from "../types";
 
-export default function TabTwoScreen({route}: RootTabScreenProps<"TabTwo">) {
+export default function TabTwoScreen({ 
+  // animation, 
+  route 
+}: RootTabScreenProps<"TabTwo">) {
   // console.log(route.params?.playerId)
-  // const {playerId} = route.params;
-  // console.log(playerId)
+  const playerId = route.params;
+  console.log(playerId)
 
   // console.log('playerId : ', playerId)
   return (

@@ -5,16 +5,37 @@ import {
   Picker,
   TouchableOpacity,
   Modal,
-  Alert,
   Pressable,
   Image,
 } from "react-native";
 
-import EditScreenInfo from "../components/EditScreenInfo";
 import { Text, View } from "../components/Themed";
 import { RootTabScreenProps } from "../types";
 
 import axios from "axios";
+interface PositionI {
+  label: string;
+  value: string;
+}
+interface PlayerI {
+  clubId: string;
+  stats: {
+    averageRating: number;
+    totalGoals: number;
+    totalMatches: number;
+    totalStartedMatches: number;
+    totalPlayedMatches: number;
+  };
+}
+
+const positions: PositionI[] = [
+  { label: "Gardien", value: "10" },
+  { label: "Défenseur", value: "20" },
+  { label: "Lateral", value: "21" },
+  { label: "Milieu défenseur", value: "30" },
+  { label: "Milieu offensif", value: "31" },
+  { label: "Attaquant", value: "40" },
+];
 
 export default function TabOneScreen({
   navigation,
@@ -65,17 +86,19 @@ export default function TabOneScreen({
         "https://api.mpg.football/api/data/championship-players-pool/1"
       );
       if (response) {
-        setPlayers(response.data.poolPlayers.sort((a: any,b: any) => {
-          const lastNameA = a.lastName.split(' ').slice(-1);
-          const lastNameB = b.lastName.split(' ').slice(-1);
-          return (lastNameA > lastNameB) ? 1 : ((lastNameB > lastNameA) ? -1 : 0)
-        }));
+        setPlayers(
+          response.data.poolPlayers.sort((a: any, b: any) => {
+            const lastNameA = a.lastName.split(" ").slice(-1);
+            const lastNameB = b.lastName.split(" ").slice(-1);
+            return lastNameA > lastNameB ? 1 : lastNameB > lastNameA ? -1 : 0;
+          })
+        );
         setList(response.data.poolPlayers);
 
         const filtered = response.data.poolPlayers.map(
           (player: { lastName: string }) => player.lastName
         );
-        setUniqPlayers([...new Set(filtered)].sort());
+        setUniqPlayers([...new Set(filtered)]);
       }
     } catch (err) {
       console.log(err);
@@ -111,16 +134,7 @@ export default function TabOneScreen({
     setIsLoading(false);
   };
 
-  const displayStats = (player: {
-    clubId: string;
-    stats: {
-      averageRating: number;
-      totalGoals: number;
-      totalMatches: number;
-      totalStartedMatches: number;
-      totalPlayedMatches: number;
-    };
-  }) => {
+  const displayStats = (player: PlayerI) => {
     setModalVisible(true);
     setModalBody({
       stats: player.stats,
@@ -151,19 +165,29 @@ export default function TabOneScreen({
             </Text>
             <Text style={styles.modalText}>
               Average rating :{" "}
-              {modalBody.stats.averageRating ? Math.round(modalBody.stats.averageRating * 100) / 100 : 0}
+              {modalBody.stats.averageRating
+                ? Math.round(modalBody.stats.averageRating * 100) / 100
+                : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total goals : {modalBody.stats.totalGoals ? modalBody.stats.totalGoals : 0}
+              Total goals :{" "}
+              {modalBody.stats.totalGoals ? modalBody.stats.totalGoals : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total matches : {modalBody.stats.totalMatches ? modalBody.stats.totalMatches : 0}
+              Total matches :{" "}
+              {modalBody.stats.totalMatches ? modalBody.stats.totalMatches : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total started matches : {modalBody.stats.totalStartedMatches ? modalBody.stats.totalStartedMatches : 0}
+              Total started matches :{" "}
+              {modalBody.stats.totalStartedMatches
+                ? modalBody.stats.totalStartedMatches
+                : 0}
             </Text>
             <Text style={styles.modalText}>
-              Total played matches : {modalBody.stats.totalPlayedMatches ? modalBody.stats.totalPlayedMatches : 0}
+              Total played matches :{" "}
+              {modalBody.stats.totalPlayedMatches
+                ? modalBody.stats.totalPlayedMatches
+                : 0}
             </Text>
             <Pressable
               style={[styles.modalButton, styles.buttonClose]}
@@ -209,12 +233,14 @@ export default function TabOneScreen({
                 label="Veuillez sélectionner une position"
                 value="0"
               />
-              <Picker.Item label="Gardien" value="10" />
-              <Picker.Item label="Défenseur" value="20" />
-              <Picker.Item label="Lateral" value="21" />
-              <Picker.Item label="Milieu défenseur" value="30" />
-              <Picker.Item label="Milieu offensif" value="31" />
-              <Picker.Item label="Attaquant" value="40" />
+              {positions &&
+                positions.map((position: PositionI, id: number) => (
+                  <Picker.Item
+                    key={id}
+                    label={position.label}
+                    value={position.value}
+                  />
+                ))}
             </Picker>
           </View>
 
@@ -236,14 +262,13 @@ export default function TabOneScreen({
                   <TouchableOpacity
                     key={id}
                     style={styles.player}
-                    onPress={() => displayStats(player)}
+                    onPress={() => {
+                      displayStats(player);
+                    }}
                   >
-                    {player.firstName && (
-                      <Text>{player.firstName}{" "}</Text>
-                    )}
-                    {player.lastName && (
-                      <Text>{player.lastName}</Text>
-                    )}
+                    {player.firstName && <Text>{player.firstName}</Text>}
+                    {player.firstName && player.lastName && <Text> </Text>}
+                    {player.lastName && <Text>{player.lastName}</Text>}
                   </TouchableOpacity>
                 ))}
             </>
@@ -284,7 +309,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 5,
     marginBottom: 5,
-    backgroundColor: 'orange'
+    backgroundColor: "orange",
   },
   button: {
     alignItems: "center",
